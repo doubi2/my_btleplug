@@ -135,7 +135,7 @@ impl Drop for BLEDevice {
     fn drop(&mut self) {
         let result = self
             .device
-            .RemoveConnectionStatusChanged(&self.connection_token);
+            .RemoveConnectionStatusChanged(self.connection_token);
         if let Err(err) = result {
             debug!("Drop:remove_connection_status_changed {:?}", err);
         }
