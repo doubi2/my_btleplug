@@ -27,8 +27,8 @@ use windows::{
 pub type ConnectedEventHandler = Box<dyn Fn(bool) + Send>;
 
 pub struct BLEDevice {
-    device: BluetoothLEDevice,
-    connection_token: EventRegistrationToken,
+    pub device: BluetoothLEDevice,
+    pub connection_token: EventRegistrationToken,
 }
 
 impl BLEDevice {
@@ -36,6 +36,8 @@ impl BLEDevice {
         address: BDAddr,
         connection_status_changed: ConnectedEventHandler,
     ) -> Result<Self> {
+        let address: BDAddr = [0xF7, 0x8C, 0x81, 0x74, 0xB0, 0x2A].into();
+        println!("address:{:?}",address);
         let async_op = BluetoothLEDevice::FromBluetoothAddressAsync(address.into())
             .map_err(|_| Error::DeviceNotFound)?;
         let device = async_op.await.map_err(|_| Error::DeviceNotFound)?;

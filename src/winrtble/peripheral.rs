@@ -121,7 +121,11 @@ impl Peripheral {
                 .collect(),
         }
     }
-
+    pub(crate) fn update_local_name(&self,local_name:String){
+        let mut local_name_guard = self.shared.local_name.write().unwrap();
+        *local_name_guard = Some(local_name);
+        
+    }
     pub(crate) fn update_properties(&self, args: &BluetoothLEAdvertisementReceivedEventArgs) {
         let advertisement = args.Advertisement().unwrap();
 
