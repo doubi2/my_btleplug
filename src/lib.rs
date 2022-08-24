@@ -106,7 +106,7 @@ pub mod platform;
 #[cfg(feature = "serde")]
 pub mod serde;
 #[cfg(target_os = "windows")]
-mod winrtble;
+pub mod winrtble;
 
 /// The main error type returned by most methods in btleplug.
 #[derive(Debug, thiserror::Error)]
@@ -138,3 +138,5 @@ pub enum Error {
 
 /// Convenience type for a result using the btleplug [`Error`] type.
 pub type Result<T> = result::Result<T, Error>;
+
+

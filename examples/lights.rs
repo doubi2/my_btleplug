@@ -9,8 +9,8 @@ use rand::{thread_rng, Rng};
 use std::error::Error;
 use std::time::Duration;
 use uuid::Uuid;
-
 const LIGHT_CHARACTERISTIC_UUID: Uuid = uuid_from_u16(0xFFE9);
+
 use tokio::time;
 
 async fn find_light(central: &Adapter) -> Option<Peripheral> {
@@ -21,7 +21,7 @@ async fn find_light(central: &Adapter) -> Option<Peripheral> {
             .unwrap()
             .local_name
             .iter()
-            .any(|name| name.contains("LEDBlue"))
+            .any(|name| name.contains("MX"))
         {
             return Some(p);
         }
@@ -51,7 +51,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     time::sleep(Duration::from_secs(2)).await;
 
     // find the device we're interested in
-    let light = find_light(&central).await.expect("No lights found");
+
+    // let light = find_light(&central).await.expect("No lights found");
+    let light = central.peripherals().await.unwrap().into_iter()
+        .nth(0)
+        .expect("Unable to find light.");
 
     // connect to the device
     light.connect().await?;
@@ -59,21 +63,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // discover services and characteristics
     light.discover_services().await?;
 
+    // // find the characteristic we want
+    // let chars = light.characteristics();
+    // let cmd_char = chars
+    //     .iter()
+    //     .find(|c| c.uuid == LIGHT_CHARACTERISTIC_UUID)
+    //     .expect("Unable to find characterics");
+    //
+    // // dance party
+    // let mut rng = thread_rng();
+    // for _ in 0..20 {
+    //     let color_cmd = vec![0x56, rng.gen(), rng.gen(), rng.gen(), 0x00, 0xF0, 0xAA];
+    //     light
+    //         .write(&cmd_char, &color_cmd, WriteType::WithoutResponse)
+    //         .await?;
+    //     time::sleep(Duration::from_millis(200)).await;
+    // }
+
     // find the characteristic we want
     let chars = light.characteristics();
-    let cmd_char = chars
-        .iter()
-        .find(|c| c.uuid == LIGHT_CHARACTERISTIC_UUID)
-        .expect("Unable to find characterics");
-
-    // dance party
-    let mut rng = thread_rng();
-    for _ in 0..20 {
-        let color_cmd = vec![0x56, rng.gen(), rng.gen(), rng.gen(), 0x00, 0xF0, 0xAA];
-        light
-            .write(&cmd_char, &color_cmd, WriteType::WithoutResponse)
-            .await?;
-        time::sleep(Duration::from_millis(200)).await;
+    let cmd_char = chars.iter().find(|c| c.uuid == Uuid::parse_str("00002a19-0000-1000-8000-00805f9b34fb").unwrap()).unwrap();
+    println!("begin read");
+    for _ in 0..100 {
+        let resp = light.read(cmd_char).await?;
+        println!("resp:{:?}",resp);
+        time::sleep(Duration::from_secs(1)).await;
     }
+
     Ok(())
 }

@@ -1,7 +1,7 @@
 // See the "macOS permissions note" in README.md before running this on macOS
 // Big Sur or later.
 
-use btleplug::api::{Central, CharPropFlags, Manager as _, Peripheral, ScanFilter};
+use btleplug::api::{Central, CharPropFlags, Manager as _, Peripheral, ScanFilter, WriteType};
 use btleplug::platform::Manager;
 use futures::stream::StreamExt;
 use std::error::Error;
@@ -10,9 +10,15 @@ use tokio::time;
 use uuid::Uuid;
 
 /// Only devices whose name contains this string will be tried.
-const PERIPHERAL_NAME_MATCH_FILTER: &str = "Neuro";
+const PERIPHERAL_NAME_MATCH_FILTER: &str = "Inateck";
+
+const MAC_PATH: &str = "F7:8C:81:74:B0:2A";
 /// UUID of the characteristic for which we should subscribe to notifications.
-const NOTIFY_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0x6e400002_b534_f393_67a9_e50e24dccA9e);
+const READ_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0x0000af0100001000800000805f9b34fb);
+const WRITE_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0x0000af0200001000800000805f9b34fb);
+const WRITE_WITHOUT_RESPONSE_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0x0000af0400001000800000805f9b34fb);
+const NOTIFY_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0x0000af0300001000800000805f9b34fb);
+// 00002a29-0000-1000-8000-00805f9b34fb
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -40,8 +46,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             for peripheral in peripherals.iter() {
                 let properties = peripheral.properties().await?;
                 let is_connected = peripheral.is_connected().await?;
+
+                let properties = properties.unwrap();
                 let local_name = properties
-                    .unwrap()
                     .local_name
                     .unwrap_or(String::from("(peripheral name unknown)"));
                 println!(
@@ -49,12 +56,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     &local_name, is_connected
                 );
                 // Check if it's the peripheral we want.
-                if local_name.contains(PERIPHERAL_NAME_MATCH_FILTER) {
+                // if local_name.contains(PERIPHERAL_NAME_MATCH_FILTER) {
                     println!("Found matching peripheral {:?}...", &local_name);
                     if !is_connected {
                         // Connect if we aren't already connected.
                         if let Err(err) = peripheral.connect().await {
-                            eprintln!("Error connecting to peripheral, skipping: {}", err);
+                            eprintln!("Error connecting to peripheral, skipping: {:?}", err);
                             continue;
                         }
                     }
@@ -70,6 +77,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             println!("Checking characteristic {:?}", characteristic);
                             // Subscribe to notifications from the characteristic with the selected
                             // UUID.
+                            // if characteristic.uuid == READ_CHARACTERISTIC_UUID {
+                            //     for _ in 0..100 {
+                            //         let resp = peripheral.read(&characteristic).await?;
+                            //         println!("resp:{:?}", resp);
+                            //         time::sleep(Duration::from_secs(1)).await;
+                            //     }
+                            // }
+                            // if characteristic.uuid == WRITE_WITHOUT_RESPONSE_CHARACTERISTIC_UUID {
+                            //     let color_cmd = vec![0x01, 0x02, 0x03, 0xAA];
+                            //     peripheral.write(&characteristic, &color_cmd, WriteType::WithoutResponse)
+                            //         .await?;
+                            //     time::sleep(Duration::from_millis(200)).await;
+                            // }
+                            // if characteristic.uuid == WRITE_CHARACTERISTIC_UUID {
+                            //     let color_cmd = vec![0x02, 0x02, 0x03, 0xAA];
+                            //     peripheral.write(&characteristic, &color_cmd, WriteType::WithResponse)
+                            //         .await?;
+                            //     time::sleep(Duration::from_millis(200)).await;
+                            // }
                             if characteristic.uuid == NOTIFY_CHARACTERISTIC_UUID
                                 && characteristic.properties.contains(CharPropFlags::NOTIFY)
                             {
@@ -90,9 +116,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         println!("Disconnecting from peripheral {:?}...", local_name);
                         peripheral.disconnect().await?;
                     }
-                } else {
-                    println!("Skipping unknown peripheral {:?}", peripheral);
-                }
+                // } else {
+                //     println!("Skipping unknown peripheral {:?}", peripheral);
+                // }
             }
         }
     }

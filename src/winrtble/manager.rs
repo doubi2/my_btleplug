@@ -14,7 +14,10 @@
 use super::adapter::Adapter;
 use crate::{api, Result};
 use async_trait::async_trait;
+use windows::Devices::Bluetooth::BluetoothLEDevice;
+use windows::Devices::Enumeration::DeviceInformation;
 use windows::Devices::Radios::{Radio, RadioKind};
+use crate::api::BDAddr;
 
 /// Implementation of [api::Manager](crate::api::Manager).
 #[derive(Clone, Debug)]
@@ -24,6 +27,29 @@ impl Manager {
     pub async fn new() -> Result<Self> {
         Ok(Self {})
     }
+
+    // pub async fn get_all_BLEDevice() -> Result<Adapter>{
+    //     let result: Adapter = Adapter::new();
+    //     let radios = Radio::GetRadiosAsync().unwrap().await?;
+    //     let radios = radios.into_iter().find(|x| x.Kind().unwrap() == RadioKind::Bluetooth);
+    //     if radios.is_some(){
+    //         let device_selector = BluetoothLEDevice::GetDeviceSelector().unwrap();
+    //         let device_collection = DeviceInformation::FindAllAsyncAqsFilter(&device_selector).
+    //             unwrap().get().expect("FindAllAsyncAqsFilter failed");
+    //
+    //         for device_info in device_collection.into_iter() {
+    //             let device_name = match device_info.Name() {
+    //                 Ok(name) => name.to_string(),
+    //                 Err(_) => "".to_string(),
+    //             };
+    //             if let Ok(device_id) = device_info.Id() {
+    //                 let ble_device = BluetoothLEDevice::FromIdAsync(device_id).unwrap().await.unwrap();
+    //                 result.set_ble_device(ble_device,device_name)?;
+    //             }
+    //         }
+    //     }
+    //     Ok(result)
+    // }
 }
 
 #[async_trait]
