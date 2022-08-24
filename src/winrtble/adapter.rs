@@ -59,7 +59,7 @@ impl Adapter {
                     continue
                 }
                 if let Ok(device_id) = device_info.Id() {
-                    let ble_device = BluetoothLEDevice::FromIdAsync(device_id).unwrap().await.unwrap();
+                    let ble_device = BluetoothLEDevice::FromIdAsync(&device_id).unwrap().await.unwrap();
                     result.set_ble_device(ble_device,device_name)?;
                 }
             }
